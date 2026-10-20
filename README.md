@@ -8,7 +8,7 @@ Um socket atua como uma interface de software (API) entre o processo de aplicaç
 A conexão resultante é full-duplex, dados podem fluir em ambas as direções simultaneamente, e ponto a ponto.
 Enquanto um socket UDP é identificado por uma tupla de dois elementos (IP de destino e porta de destino), um socket de conexão TCP é identificado de forma única por uma tupla de quatro elementos: endereço IP de origem, porta de origem, endereço IP de destino, porta de destino.
 <div align="center">
-  <img src="imagens/three_way_hand_shake.png" width="80%" />
+  <img src="imagens/comp_socket_udp_tcp.png" width="80%" />
 </div>
 
 ## 1.2. Funcionamento do Buffer TCP e Controle de Fluxo
