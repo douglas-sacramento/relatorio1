@@ -90,7 +90,7 @@ O sistema adota uma arquitetura concorrente baseada em **múltiplas threads (*mu
 
 ---
 
-### 2.2.1. Visão Geral da Arquitetura e Troca de Mensagens
+### 2.1.1. Visão Geral da Arquitetura e Troca de Mensagens
 
 O diagrama abaixo ilustra como as threads do servidor se comunicam entre si e com os dispositivos externos através de conexões TCP e filas (*queues*):
 
@@ -123,3 +123,79 @@ graph TD
     style FC fill:#f9f,stroke:#333,stroke-width:2px
     style FL fill:#bbf,stroke:#333,stroke-width:2px
 ```
+
+## 2.2. Fluxogramas das Operações do Sistema
+
+### 2.2.1. Inicialização do Cliente e Handshake no Servidor
+Quando um novo dispositivo se conecta, ocorre a validação do tipo, a escolha do ambiente no console do servidor e a geração do ID:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Cliente (Dispositivo)
+    participant TP as Thread Principal
+    participant DT as Thread do Dispositivo
+    participant S as Servidor (Console)
+
+    C->>TP: Conexão TCP (accept)
+    TP->>DT: Instancia Thread de Atendimento
+    C->>DT: MSG_REGISTRO (Tipo do Dispositivo)
+    
+    alt Tipo Invalido / Nao Suportado
+        DT-->>C: MSG_STATUS (Tipo nao suportado)
+        DT->>DT: Encerra conexao
+    else Tipo Valido
+        DT-->>C: MSG_LISTA_AMBIENTES
+        DT->>S: Solicita escolha do Ambiente
+        S-->>DT: Seleciona Ambiente
+        DT->>DT: Gera Novo ID
+        DT-->>C: MSG_STATUS (Dispositivo registrado + ID)
+    end
+```
+
+### 2.2.2. Fluxo de Leitura dos Sensores (Temperatura e Presença)
+Os sensores enviam periodicamente suas medições ao servidor, que atualiza o estado e/ou repassa o evento para a Fila de Controle:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as Sensor
+    participant DT as Thread Sensor
+    participant FC as Fila de Controle (controlQueue)
+
+    S->>DT: MSG_SENSOR (deviceID, valor)
+    alt Dispositivo Nao Registrado
+        DT-->>S: MSG_STATUS (Erro: ID Invalido)
+    else Registrado
+        DT->>DT: Armazena / Registra Leitura
+        opt Se for Sensor de Presenca
+            DT->>FC: Publica MonitorItem (Ambiente, Presenca)
+        end
+        DT-->>S: MSG_STATUS (Leitura Recebida)
+    end
+```
+
+### 2.2.3. Fluxo da Thread de Controle Geral e Acionamento de Lâmpadas
+A Thread de Controle Geral processa os eventos recebidos e aciona as lâmpadas correspondentes através das suas filas dedicadas:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FC as Fila de Controle
+    participant TCG as Thread Controle Geral
+    participant FL as Fila da Lampada (lampQueue)
+    participant DTL as Thread Lampada
+    participant L as Lampada (Cliente)
+
+    TCG->>FC: Consome evento da fila
+    alt Evento: Incluir Lampada
+        TCG->>TCG: Adiciona a lista de atuadores
+    else Evento: Deteccao de Presenca
+        TCG->>FL: Envia comando (Ligar / Desligar)
+        FL->>DTL: Consome comando da fila dedicada
+        DTL->>L: MSG_LAMPADA (Acao)
+        L-->>DTL: MSG_STATUS (Acao Executada)
+    end
+```
+
+
