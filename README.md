@@ -12,4 +12,4 @@ Enquanto um socket UDP é identificado por uma tupla de dois elementos (IP de de
 </div>
 
 ## 1.2. Funcionamento do Buffer TCP e Controle de Fluxo
-Ao estabelecer uma conexão TCP, os dois hospedeiros alocam recursos contendo variáveis de estado e buffers de envio e de recepção. Quando o processo de aplicação escreve dados no socket, os bytes são depositados no buffer de envio do TCP. O TCP retira pedaços de dados desse buffer conforme sua própria conveniência e os empacota em segmentos limitados pelo Tamanho Máximo do Segmento (Maximum Segment Size - MSS).
+Ao estabelecer uma conexão TCP, cliente e servidor alocam recursos contendo variáveis de estado e buffers de envio e de recepção. Quando o processo de aplicação escreve dados no socket, os bytes são depositados no buffer de envio do TCP. O TCP retira pedaços de dados desse buffer conforme sua própria conveniência e os empacota em segmentos limitados pelo Tamanho Máximo do Segmento (Maximum Segment Size - MSS).
