@@ -83,3 +83,46 @@ def getMessage(buffer):
 ```
 
 Esse design assegura que a aplicação saiba lidar perfeitamente com a volatilidade do buffer TCP, interpretando o fluxo contínuo de forma estruturada, síncrona e segura.
+
+## 2.1. Arquitetura e Diagramas de Fluxo
+
+O sistema adota uma arquitetura concorrente baseada em **múltiplas threads (*multithread*)** e **filas de mensagens (*queues*)**, desacoplando a recepção de dados de rede da lógica de automação da residência.
+
+---
+
+### 2.1.1. Visão Geral da Arquitetura e Troca de Mensagens
+
+O diagrama abaixo ilustra como as threads do servidor se comunicam entre si e com os dispositivos externos através de conexões TCP e filas (*queues*):
+
+```mermaid
+graph TD
+    %% Dispositivos
+    subgraph Dispositivos / Clientes (TCP)
+        CT[Cliente Termômetro]
+        CP[Cliente Sensor de Presença]
+        CL[Cliente Lâmpada]
+    end
+
+    %% Servidor
+    subgraph Servidor Central (Multithread)
+        TP[Thread Principal <br/> Server.py] -->|accept| DT1[Thread Termômetro]
+        TP -->|accept| DT2[Thread Presença]
+        TP -->|accept| DT3[Thread Lâmpada]
+
+        %% Filas
+        DT2 -->|Publica Leituras| FC[(FILA CONTROLE <br/> controlQueue)]
+        DT3 -->|Publica Registro| FC
+
+        TCG[Thread Controle Geral <br/> GeneralControl.py] -.->|Consome Comandos| FC
+        TCG -->|Publica Ação| FL[(FILA LÂMPADA <br/> lampQueue)]
+
+        FL -.->|Consome Ação| DT3
+    end
+
+    DT1 <-->|Socket TCP| CT
+    DT2 <-->|Socket TCP| CP
+    DT3 <-->|Socket TCP| CL
+
+    style FC fill:#f9f,stroke:#333,stroke-width:2px
+    style FL fill:#bbf,stroke:#333,stroke-width:2px
+```
