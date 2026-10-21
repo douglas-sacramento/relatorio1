@@ -90,33 +90,30 @@ O sistema adota uma arquitetura concorrente baseada em **múltiplas threads (*mu
 
 ---
 
-### 2.1.1. Visão Geral da Arquitetura e Troca de Mensagens
+### 2.2.1. Visão Geral da Arquitetura e Troca de Mensagens
 
 O diagrama abaixo ilustra como as threads do servidor se comunicam entre si e com os dispositivos externos através de conexões TCP e filas (*queues*):
 
 ```mermaid
 graph TD
-    %% Dispositivos
-    subgraph Dispositivos / Clientes (TCP)
-        CT[Cliente Termômetro]
-        CP[Cliente Sensor de Presença]
-        CL[Cliente Lâmpada]
+    subgraph Clientes [Dispositivos TCP]
+        CT[Cliente Termometro]
+        CP[Cliente Sensor Presenca]
+        CL[Cliente Lampada]
     end
 
-    %% Servidor
-    subgraph Servidor Central (Multithread)
-        TP[Thread Principal <br/> Server.py] -->|accept| DT1[Thread Termômetro]
-        TP -->|accept| DT2[Thread Presença]
-        TP -->|accept| DT3[Thread Lâmpada]
+    subgraph Servidor [Servidor Central Multithread]
+        TP[Thread Principal] -->|accept| DT1[Thread Termometro]
+        TP -->|accept| DT2[Thread Presenca]
+        TP -->|accept| DT3[Thread Lampada]
 
-        %% Filas
-        DT2 -->|Publica Leituras| FC[(FILA CONTROLE <br/> controlQueue)]
+        DT2 -->|Publica Leituras| FC[(controlQueue)]
         DT3 -->|Publica Registro| FC
 
-        TCG[Thread Controle Geral <br/> GeneralControl.py] -.->|Consome Comandos| FC
-        TCG -->|Publica Ação| FL[(FILA LÂMPADA <br/> lampQueue)]
+        TCG[Thread Controle Geral] -.->|Consome Comandos| FC
+        TCG -->|Publica Acao| FL[(lampQueue)]
 
-        FL -.->|Consome Ação| DT3
+        FL -.->|Consome Acao| DT3
     end
 
     DT1 <-->|Socket TCP| CT
